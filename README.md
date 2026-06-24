@@ -76,25 +76,6 @@ Generates deterministic outbreak intelligence from live data:
 
 ## System Architecture
 
-Hospital Data
-      │
-      ▼
-Weather Data ──► Neo4j Knowledge Graph ◄── Water Quality Data
-      │
-      ▼
-Prediction Engine
-      │
-      ▼
-Risk Assessment
-      │
-      ▼
-Alert Generation
-      │
-      ▼
-Dashboard & Intelligence Briefings
-
---
-
 Frontend
 
 * React.js
