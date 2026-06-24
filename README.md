@@ -76,6 +76,25 @@ Generates deterministic outbreak intelligence from live data:
 
 ## System Architecture
 
+Hospital Data
+      │
+      ▼
+Weather Data ──► Neo4j Knowledge Graph ◄── Water Quality Data
+      │
+      ▼
+Prediction Engine
+      │
+      ▼
+Risk Assessment
+      │
+      ▼
+Alert Generation
+      │
+      ▼
+Dashboard & Intelligence Briefings
+
+---
+
 Frontend
 
 * React.js
@@ -103,6 +122,21 @@ Infrastructure
 
 ---
 
+## Live Telemetry
+
+The platform continuously monitors:
+| Metric                     | Description                  |
+| -------------------------- | ---------------------------- |
+| States                     | Total monitored states       |
+| Districts                  | Total monitored districts    |
+| Admissions                 | Last 24-hour admissions      |
+| Predictions                | Latest prediction run        |
+| Weather Reports            | Latest weather observations  |
+| Water Reports              | Latest water quality reports |
+| Active High-Risk Districts | Current high-risk districts  |
+| Last Data Refresh          | Latest telemetry update      |
+
+---
 ## Database Model
 
 ### Core Nodes
