@@ -1,0 +1,71 @@
+{
+  "name": "WaterQualityReport",
+  "type": "object",
+  "properties": {
+    "station_name": {
+      "type": "string",
+      "description": "Name of the water monitoring station"
+    },
+    "state": {
+      "type": "string",
+      "description": "Indian state"
+    },
+    "district": {
+      "type": "string",
+      "description": "District within the state"
+    },
+    "ph_level": {
+      "type": "number",
+      "description": "pH level of water sample"
+    },
+    "turbidity_ntu": {
+      "type": "number",
+      "description": "Turbidity in NTU"
+    },
+    "coliform_count": {
+      "type": "number",
+      "description": "Total coliform count per 100ml"
+    },
+    "e_coli_count": {
+      "type": "number",
+      "description": "E. coli count per 100ml"
+    },
+    "dissolved_oxygen": {
+      "type": "number",
+      "description": "Dissolved oxygen in mg/L"
+    },
+    "chemical_contaminants": {
+      "type": "number",
+      "description": "Chemical contaminant index (0-100)"
+    },
+    "date_sampled": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of sample collection"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Station latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Station longitude"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "safe",
+        "warning",
+        "contaminated",
+        "critical"
+      ],
+      "description": "Overall water quality status"
+    }
+  },
+  "required": [
+    "station_name",
+    "state",
+    "district",
+    "date_sampled"
+  ]
+}

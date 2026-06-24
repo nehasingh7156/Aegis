@@ -1,0 +1,64 @@
+{
+  "name": "Alert",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Alert title"
+    },
+    "state": {
+      "type": "string",
+      "description": "Affected Indian state"
+    },
+    "district": {
+      "type": "string",
+      "description": "Affected district"
+    },
+    "disease": {
+      "type": "string",
+      "enum": [
+        "cholera",
+        "typhoid",
+        "dysentery",
+        "hepatitis_a",
+        "leptospirosis",
+        "malaria",
+        "dengue"
+      ],
+      "description": "Related disease"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "danger",
+        "critical"
+      ],
+      "description": "Alert severity"
+    },
+    "message": {
+      "type": "string",
+      "description": "Alert message details"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "acknowledged",
+        "resolved"
+      ],
+      "default": "active",
+      "description": "Current alert status"
+    },
+    "prediction_id": {
+      "type": "string",
+      "description": "Related prediction ID"
+    }
+  },
+  "required": [
+    "title",
+    "severity",
+    "message"
+  ]
+}

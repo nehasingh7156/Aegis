@@ -1,0 +1,70 @@
+{
+  "name": "HospitalAdmission",
+  "type": "object",
+  "properties": {
+    "hospital_name": {
+      "type": "string",
+      "description": "Name of the reporting hospital"
+    },
+    "state": {
+      "type": "string",
+      "description": "Indian state"
+    },
+    "district": {
+      "type": "string",
+      "description": "District within the state"
+    },
+    "disease": {
+      "type": "string",
+      "enum": [
+        "cholera",
+        "typhoid",
+        "dysentery",
+        "hepatitis_a",
+        "leptospirosis",
+        "malaria",
+        "dengue"
+      ],
+      "description": "Diagnosed disease"
+    },
+    "case_count": {
+      "type": "number",
+      "description": "Number of cases admitted"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "mild",
+        "moderate",
+        "severe",
+        "critical"
+      ],
+      "description": "Average severity of cases"
+    },
+    "date_reported": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of report"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Hospital latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Hospital longitude"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "hospital_name",
+    "state",
+    "district",
+    "disease",
+    "case_count",
+    "date_reported"
+  ]
+}

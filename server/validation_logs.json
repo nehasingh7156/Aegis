@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2026-06-24T03:44:38.646Z",
+    "entityType": "test_negative_cases",
+    "rejectedData": {
+      "hospital_name": "Max Hospital",
+      "state": "Delhi",
+      "district": "New Delhi",
+      "disease": "cholera",
+      "case_count": -10,
+      "severity": "mild",
+      "date_reported": "2026-06-24",
+      "latitude": 28.6139,
+      "longitude": 77.209
+    },
+    "reason": "Invalid case_count: -10. Must be non-negative integer."
+  }
+]

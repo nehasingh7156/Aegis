@@ -1,0 +1,87 @@
+{
+  "name": "OutbreakPrediction",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "description": "Indian state"
+    },
+    "district": {
+      "type": "string",
+      "description": "District within the state"
+    },
+    "disease": {
+      "type": "string",
+      "enum": [
+        "cholera",
+        "typhoid",
+        "dysentery",
+        "hepatitis_a",
+        "leptospirosis",
+        "malaria",
+        "dengue"
+      ],
+      "description": "Predicted disease"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "description": "Predicted risk level"
+    },
+    "confidence_score": {
+      "type": "number",
+      "description": "Prediction confidence (0-100)"
+    },
+    "anomaly_score": {
+      "type": "number",
+      "description": "Anomaly detection score (0-100)"
+    },
+    "predicted_cases": {
+      "type": "number",
+      "description": "Estimated case count in 48h"
+    },
+    "prediction_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date prediction was generated"
+    },
+    "contributing_factors": {
+      "type": "string",
+      "description": "Key factors driving the prediction"
+    },
+    "reasoning": {
+      "type": "string",
+      "description": "AI epidemiological reasoning \u2014 why risk increased, which factors contributed most"
+    },
+    "environmental_triggers": {
+      "type": "string",
+      "description": "Environmental factors like rainfall, temperature, contamination"
+    },
+    "neighbor_influence": {
+      "type": "string",
+      "description": "Nearby district/state outbreak propagation influence"
+    },
+    "recommended_actions": {
+      "type": "string",
+      "description": "Recommended preventive actions"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "state",
+    "district",
+    "disease",
+    "risk_level",
+    "prediction_date"
+  ]
+}
