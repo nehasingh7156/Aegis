@@ -12,12 +12,13 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { API_BASE } from "@/lib/api";
 
 export default function Overview() {
   const { data: systemStatus } = useQuery({
     queryKey: ["system-status"],
     queryFn: async () => {
-      const res = await fetch("/api/system/status");
+      const res = await fetch(`${API_BASE}/api/system/status`);
       if (!res.ok) throw new Error("Failed to fetch system status");
       return res.json();
     },
@@ -26,7 +27,7 @@ export default function Overview() {
   const { data: admissions = [] } = useQuery({
     queryKey: ["admissions"],
     queryFn: async () => {
-      const res = await fetch("/api/admissions");
+      const res = await fetch(`${API_BASE}/api/admissions`);
       if (!res.ok) throw new Error("Failed to fetch admissions");
       return res.json();
     },
@@ -36,7 +37,7 @@ export default function Overview() {
   const { data: waterReports = [] } = useQuery({
     queryKey: ["water-reports"],
     queryFn: async () => {
-      const res = await fetch("/api/water-reports");
+      const res = await fetch(`${API_BASE}/api/water-reports`);
       if (!res.ok) throw new Error("Failed to fetch water reports");
       return res.json();
     },
@@ -46,7 +47,7 @@ export default function Overview() {
   const { data: predictions = [] } = useQuery({
     queryKey: ["predictions"],
     queryFn: async () => {
-      const res = await fetch("/api/predictions");
+      const res = await fetch(`${API_BASE}/api/predictions`);
       if (!res.ok) throw new Error("Failed to fetch predictions");
       return res.json();
     },
@@ -56,7 +57,7 @@ export default function Overview() {
   const { data: alerts = [] } = useQuery({
     queryKey: ["active-alerts"],
     queryFn: async () => {
-      const res = await fetch("/api/alerts");
+      const res = await fetch(`${API_BASE}/api/alerts`);
       if (!res.ok) throw new Error("Failed to fetch alerts");
       const allAlerts = await res.json();
       return allAlerts.filter(a => a.status === "active");

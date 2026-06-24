@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Loader2, Zap, Lightbulb, MapPin, Droplets, Thermometer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "@/lib/api";
 
 const riskColors = {
   low: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
@@ -22,7 +23,7 @@ export default function Predictions() {
   const { data: predictions = [] } = useQuery({
     queryKey: ["predictions"],
     queryFn: async () => {
-      const res = await fetch("/api/predictions");
+      const res = await fetch(`${API_BASE}/api/predictions`);
       if (!res.ok) throw new Error("Failed to fetch predictions");
       return res.json();
     },
@@ -32,7 +33,7 @@ export default function Predictions() {
   const { data: admissions = [] } = useQuery({
     queryKey: ["admissions"],
     queryFn: async () => {
-      const res = await fetch("/api/admissions");
+      const res = await fetch(`${API_BASE}/api/admissions`);
       if (!res.ok) throw new Error("Failed to fetch admissions");
       return res.json();
     },
@@ -42,7 +43,7 @@ export default function Predictions() {
   const { data: waterReports = [] } = useQuery({
     queryKey: ["water-reports"],
     queryFn: async () => {
-      const res = await fetch("/api/water-reports");
+      const res = await fetch(`${API_BASE}/api/water-reports`);
       if (!res.ok) throw new Error("Failed to fetch water reports");
       return res.json();
     },
@@ -52,7 +53,7 @@ export default function Predictions() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const response = await fetch("/api/predictions/trigger", {
+      const response = await fetch(`${API_BASE}/api/predictions/trigger`, {
         method: "POST",
       });
       if (response.ok) {

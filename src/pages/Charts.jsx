@@ -7,6 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, Droplets, Activity } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 const RISK_COLORS = { low: "#22c55e", medium: "#0ea5e9", high: "#f59e0b", critical: "#ef4444" };
 const DISEASE_COLORS = { cholera: "#ef4444", typhoid: "#f59e0b", dysentery: "#f97316", hepatitis_a: "#a855f7", leptospirosis: "#0ea5e9", malaria: "#22c55e", dengue: "#ec4899" };
@@ -49,7 +50,7 @@ export default function Charts() {
   const { data: predictions = [] } = useQuery({
     queryKey: ["predictions"],
     queryFn: async () => {
-      const res = await fetch("/api/predictions");
+      const res = await fetch(`${API_BASE}/api/predictions`);
       if (!res.ok) throw new Error("Failed to fetch predictions");
       return res.json();
     },
@@ -59,7 +60,7 @@ export default function Charts() {
   const { data: waterReports = [] } = useQuery({
     queryKey: ["water-reports"],
     queryFn: async () => {
-      const res = await fetch("/api/water-reports");
+      const res = await fetch(`${API_BASE}/api/water-reports`);
       if (!res.ok) throw new Error("Failed to fetch water reports");
       return res.json();
     },
@@ -69,7 +70,7 @@ export default function Charts() {
   const { data: admissions = [] } = useQuery({
     queryKey: ["admissions"],
     queryFn: async () => {
-      const res = await fetch("/api/admissions");
+      const res = await fetch(`${API_BASE}/api/admissions`);
       if (!res.ok) throw new Error("Failed to fetch admissions");
       return res.json();
     },

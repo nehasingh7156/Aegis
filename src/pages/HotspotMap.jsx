@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Layers, Activity } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import { API_BASE } from "@/lib/api";
 
 const riskColorMap = { low: "#22c55e", medium: "#0ea5e9", high: "#f59e0b", critical: "#ef4444" };
 const statusColorMap = { safe: "#22c55e", warning: "#f59e0b", contaminated: "#ef4444", critical: "#dc2626" };
@@ -25,7 +26,7 @@ export default function HotspotMap() {
   const { data: admissions = [] } = useQuery({
     queryKey: ["admissions"],
     queryFn: async () => {
-      const res = await fetch("/api/admissions");
+      const res = await fetch(`${API_BASE}/api/admissions`);
       if (!res.ok) throw new Error("Failed to fetch admissions");
       return res.json();
     },
@@ -35,7 +36,7 @@ export default function HotspotMap() {
   const { data: waterReports = [] } = useQuery({
     queryKey: ["water-reports"],
     queryFn: async () => {
-      const res = await fetch("/api/water-reports");
+      const res = await fetch(`${API_BASE}/api/water-reports`);
       if (!res.ok) throw new Error("Failed to fetch water reports");
       return res.json();
     },
@@ -45,7 +46,7 @@ export default function HotspotMap() {
   const { data: predictions = [] } = useQuery({
     queryKey: ["predictions"],
     queryFn: async () => {
-      const res = await fetch("/api/predictions");
+      const res = await fetch(`${API_BASE}/api/predictions`);
       if (!res.ok) throw new Error("Failed to fetch predictions");
       return res.json();
     },

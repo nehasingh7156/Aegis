@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, Info, AlertCircle, Flame, CheckCircle2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "@/lib/api";
 
 const severityConfig = {
   info: { icon: Info, color: "text-sky-400", bg: "bg-sky-500/10 border-sky-500/30" },
@@ -27,7 +28,7 @@ export default function Alerts() {
   const { data: alerts = [] } = useQuery({
     queryKey: ["all-alerts"],
     queryFn: async () => {
-      const res = await fetch("/api/alerts");
+      const res = await fetch(`${API_BASE}/api/alerts`);
       if (!res.ok) throw new Error("Failed to fetch alerts");
       return res.json();
     },
@@ -36,7 +37,7 @@ export default function Alerts() {
 
   const updateMut = useMutation({
     mutationFn: async ({ id, data }) => {
-      const res = await fetch(`/api/alerts/${id}`, {
+      const res = await fetch(`${API_BASE}/api/alerts/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -52,7 +53,7 @@ export default function Alerts() {
 
   const deleteMut = useMutation({
     mutationFn: async (id) => {
-      const res = await fetch(`/api/alerts/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/alerts/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete alert");
       return res.json();
     },

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Droplets, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "@/lib/api";
 
 const statuses = ["safe", "warning", "contaminated", "critical"];
 const statusColors = {
@@ -31,7 +32,7 @@ export default function WaterQuality() {
   const { data: reports = [] } = useQuery({
     queryKey: ["water-reports"],
     queryFn: async () => {
-      const res = await fetch("/api/water-reports");
+      const res = await fetch(`${API_BASE}/api/water-reports`);
       if (!res.ok) throw new Error("Failed to fetch water reports");
       return res.json();
     },
@@ -44,7 +45,7 @@ export default function WaterQuality() {
       const clean = { ...d };
       numFields.forEach((f) => { if (clean[f]) clean[f] = Number(clean[f]); else delete clean[f]; });
       
-      const res = await fetch("/api/water-reports", {
+      const res = await fetch(`${API_BASE}/api/water-reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(clean),
@@ -69,7 +70,7 @@ export default function WaterQuality() {
 
   const deleteMut = useMutation({
     mutationFn: async (id) => {
-      const res = await fetch(`/api/water-reports/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/water-reports/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete water report");
       return res.json();
     },

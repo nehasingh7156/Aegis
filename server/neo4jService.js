@@ -1091,9 +1091,10 @@ async function saveValidationLog(log) {
 async function getSystemMetrics() {
   const session = driver.session();
   try {
+    // Single round-trip: measure latency of the real metrics query itself.
+    // Previously two sequential round-trips were made (RETURN 1 ping + metrics query),
+    // each adding ~600-700ms of AuraDB network latency. Now one round-trip serves both.
     const t0 = Date.now();
-    await session.run("RETURN 1");
-    const neo4jLatencyMs = Date.now() - t0;
 
     const metricsRes = await session.run(`
       CALL {
@@ -1110,19 +1111,14 @@ async function getSystemMetrics() {
         RETURN COALESCE(sum(a.case_count), 0) AS admissions
       }
       CALL {
+        // Single scan resolves latestPredDate and derives both prediction count
+        // and active high-risk district count — eliminates the duplicate full-table scan.
         MATCH (p:OutbreakPrediction)
-        WITH p ORDER BY p.prediction_date DESC LIMIT 1
-        WITH p.prediction_date AS latestPredDate
+        WITH max(p.prediction_date) AS latestPredDate
         MATCH (p2:OutbreakPrediction {prediction_date: latestPredDate})
-        RETURN count(p2) AS predictions
-      }
-      CALL {
-        MATCH (p:OutbreakPrediction)
-        WITH p ORDER BY p.prediction_date DESC LIMIT 1
-        WITH p.prediction_date AS latestPredDate
-        MATCH (p3:OutbreakPrediction {prediction_date: latestPredDate})
-        WHERE p3.risk_level IN ['high', 'critical']
-        RETURN count(p3) AS activeHighRiskDistricts
+        RETURN
+          count(p2) AS predictions,
+          sum(CASE WHEN p2.risk_level IN ['high', 'critical'] THEN 1 ELSE 0 END) AS activeHighRiskDistricts
       }
       CALL {
         MATCH (w:WeatherPattern)
@@ -1158,6 +1154,8 @@ async function getSystemMetrics() {
       }
       RETURN districts, states, admissions, predictions, activeHighRiskDistricts, weather, water, valLogs, max_adm, max_pred, max_wea, max_wat
     `);
+
+    const neo4jLatencyMs = Date.now() - t0;
     const record = metricsRes.records[0];
 
     const parseToDate = (str) => {
@@ -1213,6 +1211,7 @@ async function getSystemMetrics() {
     await session.close();
   }
 }
+
 
 // SEED FLUSH FOR RE-SEEDING
 async function clearDatabase() {

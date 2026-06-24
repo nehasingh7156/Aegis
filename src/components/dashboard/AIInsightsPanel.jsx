@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { model } from "@/lib/gemini";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "@/lib/api";
 
 export default function AIInsightsPanel({
   admissions,
@@ -24,7 +25,7 @@ export default function AIInsightsPanel({
     try {
       setLoading(true);
 
-      const response = await fetch("/api/briefing", {
+      const response = await fetch(`${API_BASE}/api/briefing`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

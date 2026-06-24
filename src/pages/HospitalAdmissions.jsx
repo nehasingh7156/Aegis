@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Search, Building2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "@/lib/api";
 
 const diseases = ["cholera", "typhoid", "dysentery", "hepatitis_a", "leptospirosis", "malaria", "dengue"];
 const severities = ["mild", "moderate", "severe", "critical"];
@@ -49,7 +50,7 @@ export default function HospitalAdmissions() {
       const offset = (page - 1) * limit;
       const qState = filterRegion === "all" ? "" : filterRegion;
       const qDisease = filterDisease === "all" ? "" : filterDisease;
-      const res = await fetch(`/api/admissions?limit=${limit}&offset=${offset}&search=${encodeURIComponent(search)}&state=${encodeURIComponent(qState)}&disease=${encodeURIComponent(qDisease)}`);
+      const res = await fetch(`${API_BASE}/api/admissions?limit=${limit}&offset=${offset}&search=${encodeURIComponent(search)}&state=${encodeURIComponent(qState)}&disease=${encodeURIComponent(qDisease)}`);
       if (!res.ok) throw new Error("Failed to fetch admissions");
       return res.json();
     },
@@ -58,7 +59,7 @@ export default function HospitalAdmissions() {
 
   const createMut = useMutation({
     mutationFn: async (d) => {
-      const res = await fetch("/api/admissions", {
+      const res = await fetch(`${API_BASE}/api/admissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,7 +88,7 @@ export default function HospitalAdmissions() {
 
   const deleteMut = useMutation({
     mutationFn: async (id) => {
-      const res = await fetch(`/api/admissions/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/admissions/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete admission");
       return res.json();
     },
