@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
-export default function StatCard({ title, value, subtitle, icon: Icon, trend, trendValue, color = "primary" }) {
+export default function StatCard({ title, value, subtitle, icon: Icon, trend, trendValue, color = "primary", loading = false }) {
   const colorMap = {
     primary: "text-primary bg-primary/10 border-primary/20",
     destructive: "text-red-400 bg-red-500/10 border-red-500/20",
@@ -24,8 +24,18 @@ export default function StatCard({ title, value, subtitle, icon: Icon, trend, tr
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-          <p className="text-3xl font-bold font-heading tracking-tight text-foreground">{value}</p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          
+          {loading ? (
+            <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />
+          ) : (
+            <p className="text-3xl font-bold font-heading tracking-tight text-foreground">{value}</p>
+          )}
+
+          {subtitle && (
+            loading
+              ? <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+              : <p className="text-xs text-muted-foreground">{subtitle}</p>
+          )}
           {trendValue && (
             <div className={`flex items-center gap-1 text-xs font-medium ${trendColor}`}>
               <TrendIcon className="w-3 h-3" />

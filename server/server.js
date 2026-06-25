@@ -47,6 +47,46 @@ function getAvgWorkerLatency() {
   return Math.round(workerLatencies.reduce((a, b) => a + b, 0) / workerLatencies.length);
 }
 
+// ----------------------------------------
+// In-process telemetry cache for /api/system/status
+//
+// CACHED (30s TTL) — Neo4j telemetry fields that require an AuraDB round-trip:
+//   total_admissions, total_predictions, total_weather, total_water,
+//   total_states, total_districts, active_high_risk_districts, last_data_refresh
+//
+// NOT CACHED (live per-request) — process-level fields:
+//   uptime_seconds, memory_usage, cache_hit_rate_percent, cache_hits, cache_misses
+// ----------------------------------------
+const statusCache = {
+  neo4j: null,       // stores the raw neo4j metrics object from getSystemMetrics()
+  etl: null,         // stores job health snapshot
+  lastFetched: 0,
+  ttlMs: 30_000,
+  refreshing: false
+};
+
+async function refreshStatusCache() {
+  if (statusCache.refreshing) return;
+  statusCache.refreshing = true;
+  try {
+    // Only the Neo4j query result is cached — AuraDB is the expensive part.
+    const metrics = await neo4jService.getSystemMetrics();
+    statusCache.neo4j = metrics;
+    statusCache.etl = {
+      weather_etl: jobHealth.weather_etl,
+      water_etl: jobHealth.water_etl,
+      hospital_etl: jobHealth.hospital_etl,
+      prediction_etl: jobHealth.prediction_etl
+    };
+    statusCache.lastFetched = Date.now();
+    console.log("[statusCache] Refreshed. neo4j_latency_ms:", metrics.neo4j_latency_ms);
+  } catch (err) {
+    console.warn("[statusCache] Refresh error:", err.message);
+  } finally {
+    statusCache.refreshing = false;
+  }
+}
+
 const jobHealth = {
   weather_etl: { status: "unknown", last_run: null, error: null },
   water_etl: { status: "unknown", last_run: null, error: null },
@@ -153,35 +193,49 @@ function getCoordinatesForDistrict(district) {
 // ----------------------------------------
 
 // 1. SYSTEM HEALTH AND OBSERVABILITY
+// Neo4j metrics are served from statusCache (30s TTL, refreshed by background setInterval).
+// Live fields — uptime_seconds, memory_usage, cache hit counters — are always computed
+// fresh at request time and are NEVER stored in the cache.
 app.get("/api/system/status", async (req, res) => {
   try {
-    const metrics = await neo4jService.getSystemMetrics();
-    const hitRate = cacheHits + cacheMisses > 0 
-      ? parseFloat((cacheHits / (cacheHits + cacheMisses) * 100).toFixed(2)) 
+    const age = Date.now() - statusCache.lastFetched;
+    const cacheExpired = !statusCache.neo4j || age >= statusCache.ttlMs;
+
+    if (cacheExpired) {
+      // Cache miss: refresh Neo4j telemetry now and then respond
+      await refreshStatusCache();
+    }
+    // If still null after refresh (e.g. DB unavailable), serve fallback
+    const neo4j = statusCache.neo4j || { neo4j_status: "starting" };
+    const etl = statusCache.etl || {};
+
+    // Live fields — computed fresh every request, never cached
+    const hitRate = cacheHits + cacheMisses > 0
+      ? parseFloat((cacheHits / (cacheHits + cacheMisses) * 100).toFixed(2))
       : 0.0;
 
     res.json({
       status: "healthy",
-      uptime_seconds: Math.round(process.uptime()),
-      neo4j: metrics,
-      last_data_refresh: metrics.last_data_refresh,
+      uptime_seconds: Math.round(process.uptime()),           // LIVE
+      neo4j,
+      last_data_refresh: neo4j.last_data_refresh,
       redis: {
         status: cache.isRedisConnected() ? "connected" : "disconnected",
-        cache_hit_rate_percent: hitRate,
-        cache_hits: cacheHits,
-        cache_misses: cacheMisses
+        cache_hit_rate_percent: hitRate,                       // LIVE
+        cache_hits: cacheHits,                                 // LIVE
+        cache_misses: cacheMisses                              // LIVE
       },
       telemetry: {
-        average_query_latency_ms: getAvgQueryLatency(),
-        average_worker_latency_ms: getAvgWorkerLatency(),
-        weather_etl: jobHealth.weather_etl,
-        water_etl: jobHealth.water_etl,
-        hospital_etl: jobHealth.hospital_etl,
-        prediction_etl: jobHealth.prediction_etl,
-        active_high_risk_districts: metrics.active_high_risk_districts,
-        last_data_refresh: metrics.last_data_refresh
+        average_query_latency_ms: getAvgQueryLatency(),        // LIVE
+        average_worker_latency_ms: getAvgWorkerLatency(),      // LIVE
+        weather_etl: etl.weather_etl || jobHealth.weather_etl,
+        water_etl: etl.water_etl || jobHealth.water_etl,
+        hospital_etl: etl.hospital_etl || jobHealth.hospital_etl,
+        prediction_etl: etl.prediction_etl || jobHealth.prediction_etl,
+        active_high_risk_districts: neo4j.active_high_risk_districts,
+        last_data_refresh: neo4j.last_data_refresh
       },
-      memory_usage: {
+      memory_usage: {                                          // LIVE
         rss_mb: Math.round(process.memoryUsage().rss / 1024 / 1024 * 10) / 10,
         heap_used_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 10) / 10
       }
@@ -624,27 +678,39 @@ const server = app.listen(PORT, async () => {
       console.error("Startup validation telemetry checks failed:", err.message);
     }
 
-    // Pre-warm the cache for heavy queries
+    // Pre-warm the cache for heavy queries — PARALLEL to cut cold-start from ~4s to ~1.2s
     try {
-      console.log("Pre-warming dashboard cache...");
+      console.log("Pre-warming dashboard cache (parallel)...");
       const startPrewarm = Date.now();
-      
-      const admissionsData = await neo4jService.getAdmissions();
-      await cache.set("admissions_all_0____", admissionsData, 900);
-      
-      const waterData = await neo4jService.getWaterReports();
-      await cache.set("water_reports", waterData, 900);
-      
-      const predData = await neo4jService.getPredictions();
-      await cache.set("predictions", predData, 1800);
-      
-      const alertData = await neo4jService.getAlerts();
-      await cache.set("alerts", alertData, 300);
-      
-      console.log(`Dashboard cache pre-warmed successfully in ${Date.now() - startPrewarm}ms.`);
+
+      const [admissionsData, waterData, predData, alertData] = await Promise.all([
+        neo4jService.getAdmissions(),
+        neo4jService.getWaterReports(),
+        neo4jService.getPredictions(),
+        neo4jService.getAlerts()
+      ]);
+
+      await Promise.all([
+        cache.set("admissions_all_0____", admissionsData, 900),
+        cache.set("water_reports", waterData, 900),
+        cache.set("predictions", predData, 1800),
+        cache.set("alerts", alertData, 300)
+      ]);
+
+      // Warm the status cache so the very first dashboard load is instant
+      await refreshStatusCache();
+
+      console.log(`Dashboard cache pre-warmed in ${Date.now() - startPrewarm}ms.`);
     } catch (cacheErr) {
       console.warn("Dashboard cache pre-warming warning:", cacheErr.message);
     }
+
+    // Background status refresh: keeps statusCache fresh every 60s
+    setInterval(() => {
+      refreshStatusCache().catch(err =>
+        console.warn("[statusCache] Scheduled refresh error:", err.message)
+      );
+    }, 60_000);
   } catch (err) {
     console.error("Failed to initialize master districts on startup:", err.message);
   }

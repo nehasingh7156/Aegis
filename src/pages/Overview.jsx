@@ -15,13 +15,15 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { API_BASE } from "@/lib/api";
 
 export default function Overview() {
-  const { data: systemStatus } = useQuery({
+  const { data: systemStatus, isLoading: statusLoading } = useQuery({
     queryKey: ["system-status"],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/system/status`);
       if (!res.ok) throw new Error("Failed to fetch system status");
       return res.json();
     },
+    // Match the 30s server-side cache TTL — no point asking for fresher data
+    staleTime: 30_000,
   });
 
   const { data: admissions = [] } = useQuery({
@@ -220,28 +222,32 @@ export default function Overview() {
           icon={Building2} 
           trend="up" 
           trendValue="India-wide" 
-          color="destructive" 
+          color="destructive"
+          loading={statusLoading}
         />
         <StatCard 
           title="Water Stations" 
           value={totalWaterValue} 
           subtitle="Water Reports (Latest Reporting Date)" 
           icon={Droplets} 
-          color={stats.contaminated > 0 ? "warning" : "success"} 
+          color={stats.contaminated > 0 ? "warning" : "success"}
+          loading={statusLoading}
         />
         <StatCard 
           title="Predictions" 
           value={totalPredictionsValue} 
           subtitle="Latest Prediction Run" 
           icon={Brain} 
-          color="info" 
+          color="info"
+          loading={statusLoading}
         />
         <StatCard 
           title="Active High-Risk Districts" 
           value={activeHighRiskDistrictsValue} 
           subtitle="Latest Prediction Run" 
           icon={MapPin} 
-          color="warning" 
+          color="warning"
+          loading={statusLoading}
         />
         <StatCard 
           title="Active Alerts" 
