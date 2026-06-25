@@ -65,26 +65,36 @@ const statusCache = {
   refreshing: false
 };
 
+let activeRefreshPromise = null;
+
 async function refreshStatusCache() {
-  if (statusCache.refreshing) return;
-  statusCache.refreshing = true;
-  try {
-    // Only the Neo4j query result is cached — AuraDB is the expensive part.
-    const metrics = await neo4jService.getSystemMetrics();
-    statusCache.neo4j = metrics;
-    statusCache.etl = {
-      weather_etl: jobHealth.weather_etl,
-      water_etl: jobHealth.water_etl,
-      hospital_etl: jobHealth.hospital_etl,
-      prediction_etl: jobHealth.prediction_etl
-    };
-    statusCache.lastFetched = Date.now();
-    console.log("[statusCache] Refreshed. neo4j_latency_ms:", metrics.neo4j_latency_ms);
-  } catch (err) {
-    console.warn("[statusCache] Refresh error:", err.message);
-  } finally {
-    statusCache.refreshing = false;
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
   }
+
+  activeRefreshPromise = (async () => {
+    try {
+      // Only the Neo4j query result is cached — AuraDB is the expensive part.
+      const metrics = await neo4jService.getSystemMetrics();
+      statusCache.neo4j = metrics;
+      statusCache.etl = {
+        weather_etl: jobHealth.weather_etl,
+        water_etl: jobHealth.water_etl,
+        hospital_etl: jobHealth.hospital_etl,
+        prediction_etl: jobHealth.prediction_etl
+      };
+      statusCache.lastFetched = Date.now();
+      console.log("[statusCache] Refreshed. neo4j_latency_ms:", metrics.neo4j_latency_ms);
+    } catch (err) {
+      console.warn("[statusCache] Refresh error:", err.message);
+    } finally {
+      statusCache.refreshing = false;
+      activeRefreshPromise = null;
+    }
+  })();
+
+  statusCache.refreshing = true;
+  return activeRefreshPromise;
 }
 
 const jobHealth = {
