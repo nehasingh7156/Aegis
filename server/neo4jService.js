@@ -1106,9 +1106,16 @@ async function getSystemMetrics() {
         RETURN count(s) AS states
       }
       CALL {
+        // FIX: Epidemiological admissions data arrives with a 1-2 day reporting lag.
+        // The previous query anchored on date() (today), so date() - 1day = 2026-06-24,
+        // but all data is from 2026-06-23 or earlier — returning 0 every single time.
+        // Fix: anchor on max(date_reported) — the latest date actually present in the DB,
+        // exactly the same pattern used for water reports.
         MATCH (a:HospitalAdmission)
-        WHERE date(a.date_reported) >= date() - duration({days: 1})
-        RETURN COALESCE(sum(a.case_count), 0) AS admissions
+        WITH max(a.date_reported) AS latestAdmDate
+        MATCH (a2:HospitalAdmission)
+        WHERE a2.date_reported = latestAdmDate
+        RETURN COALESCE(sum(a2.case_count), 0) AS admissions
       }
       CALL {
         // Single scan resolves latestPredDate and derives both prediction count
