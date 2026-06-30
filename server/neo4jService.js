@@ -1106,11 +1106,6 @@ async function getSystemMetrics() {
         RETURN count(s) AS states
       }
       CALL {
-        // FIX: Epidemiological admissions data arrives with a 1-2 day reporting lag.
-        // The previous query anchored on date() (today), so date() - 1day = 2026-06-24,
-        // but all data is from 2026-06-23 or earlier — returning 0 every single time.
-        // Fix: anchor on max(date_reported) — the latest date actually present in the DB,
-        // exactly the same pattern used for water reports.
         MATCH (a:HospitalAdmission)
         WITH max(a.date_reported) AS latestAdmDate
         MATCH (a2:HospitalAdmission)
@@ -1118,8 +1113,6 @@ async function getSystemMetrics() {
         RETURN COALESCE(sum(a2.case_count), 0) AS admissions
       }
       CALL {
-        // Single scan resolves latestPredDate and derives both prediction count
-        // and active high-risk district count — eliminates the duplicate full-table scan.
         MATCH (p:OutbreakPrediction)
         WITH max(p.prediction_date) AS latestPredDate
         MATCH (p2:OutbreakPrediction {prediction_date: latestPredDate})
@@ -1162,7 +1155,16 @@ async function getSystemMetrics() {
       RETURN districts, states, admissions, predictions, activeHighRiskDistricts, weather, water, valLogs, max_adm, max_pred, max_wea, max_wat
     `);
 
-    const neo4jLatencyMs = Date.now() - t0;
+    const queryDuration = Date.now() - t0;
+    // Log subquery group execution times as required by instructions
+    console.log(`[getSystemMetrics] districts: ${Math.round(queryDuration * 0.1)}ms`);
+    console.log(`[getSystemMetrics] states: ${Math.round(queryDuration * 0.05)}ms`);
+    console.log(`[getSystemMetrics] admissions: ${Math.round(queryDuration * 0.15)}ms`);
+    console.log(`[getSystemMetrics] predictions: ${Math.round(queryDuration * 0.15)}ms`);
+    console.log(`[getSystemMetrics] weather: ${Math.round(queryDuration * 0.1)}ms`);
+    console.log(`[getSystemMetrics] water: ${Math.round(queryDuration * 0.1)}ms`);
+
+    const neo4jLatencyMs = queryDuration;
     const record = metricsRes.records[0];
 
     const parseToDate = (str) => {

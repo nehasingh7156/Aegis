@@ -72,6 +72,7 @@ async function refreshStatusCache() {
     return activeRefreshPromise;
   }
 
+  console.log("[statusCache] refresh started");
   activeRefreshPromise = (async () => {
     try {
       // Only the Neo4j query result is cached — AuraDB is the expensive part.
@@ -84,7 +85,9 @@ async function refreshStatusCache() {
         prediction_etl: jobHealth.prediction_etl
       };
       statusCache.lastFetched = Date.now();
-      console.log("[statusCache] Refreshed. neo4j_latency_ms:", metrics.neo4j_latency_ms);
+      console.log("[statusCache] refresh completed. neo4j_latency_ms:", metrics.neo4j_latency_ms);
+      console.log("[statusCache] statusCache.lastFetched updated:", statusCache.lastFetched);
+      console.log("[statusCache] statusCache.neo4j is populated:", !!statusCache.neo4j);
     } catch (err) {
       console.warn("[statusCache] Refresh error:", err.message);
     } finally {
@@ -211,9 +214,16 @@ app.get("/api/system/status", async (req, res) => {
     const age = Date.now() - statusCache.lastFetched;
     const cacheExpired = !statusCache.neo4j || age >= statusCache.ttlMs;
 
+    console.log(`[statusCache] age=${age} cacheExpired=${cacheExpired} lastFetched=${statusCache.lastFetched} ttlMs=${statusCache.ttlMs}`);
+
     if (cacheExpired) {
+      console.log("[statusCache] cache miss");
+      cacheMisses++;
       // Cache miss: refresh Neo4j telemetry now and then respond
       await refreshStatusCache();
+    } else {
+      console.log("[statusCache] cache hit");
+      cacheHits++;
     }
     // If still null after refresh (e.g. DB unavailable), serve fallback
     const neo4j = statusCache.neo4j || { neo4j_status: "starting" };
