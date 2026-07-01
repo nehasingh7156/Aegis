@@ -221,6 +221,7 @@ app.get("/api/system/status", async (req, res) => {
       cacheMisses++;
       // Cache miss: refresh Neo4j telemetry now and then respond
       await refreshStatusCache();
+      console.log("[statusCache] neo4j object in statusCache after refresh:", statusCache.neo4j);
     } else {
       console.log("[statusCache] cache hit");
       cacheHits++;
@@ -234,7 +235,7 @@ app.get("/api/system/status", async (req, res) => {
       ? parseFloat((cacheHits / (cacheHits + cacheMisses) * 100).toFixed(2))
       : 0.0;
 
-    res.json({
+    const resBody = {
       status: "healthy",
       uptime_seconds: Math.round(process.uptime()),           // LIVE
       neo4j,
@@ -259,7 +260,11 @@ app.get("/api/system/status", async (req, res) => {
         rss_mb: Math.round(process.memoryUsage().rss / 1024 / 1024 * 10) / 10,
         heap_used_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 10) / 10
       }
-    });
+    };
+
+    console.log("[statusCache] Admissions in resBody:", resBody.neo4j.total_admissions);
+
+    res.json(resBody);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -666,6 +671,9 @@ app.get("/test", async (req, res) => {
 // Startup initialization: districts dataset & borders setup, start cron schedulers
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, async () => {
+  console.log("=== BUILD INFO ===");
+  console.log("Commit:", process.env.RAILWAY_GIT_COMMIT_SHA);
+  console.log("Branch:", process.env.RAILWAY_GIT_BRANCH);
   console.log(`Server running on port ${PORT}`);
   await neo4jService.initConstraints();
 

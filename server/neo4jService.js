@@ -1155,6 +1155,10 @@ async function getSystemMetrics() {
       RETURN districts, states, admissions, predictions, activeHighRiskDistricts, weather, water, valLogs, max_adm, max_pred, max_wea, max_wat
     `);
 
+    if (metricsRes.records[0]) {
+      console.log(metricsRes.records[0].toObject());
+    }
+
     const queryDuration = Date.now() - t0;
     // Log subquery group execution times as required by instructions
     console.log(`[getSystemMetrics] districts: ${Math.round(queryDuration * 0.1)}ms`);
@@ -1166,6 +1170,10 @@ async function getSystemMetrics() {
 
     const neo4jLatencyMs = queryDuration;
     const record = metricsRes.records[0];
+    if (record) {
+      console.log("Admissions before return:", record.get("admissions"));
+      console.log("Converted:", convertNeo4jTypes(record.get("admissions")));
+    }
 
     const parseToDate = (str) => {
       if (!str) return null;
